@@ -78,3 +78,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dashboardContent {
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .dashboardContent {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
