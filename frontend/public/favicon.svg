@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Glowing outer circular contour -->
+  <circle cx="64" cy="64" r="60" fill="url(#shieldBg)" stroke="url(#borderGrad)" stroke-width="4.5" filter="drop-shadow(0px 4px 10px rgba(99, 102, 241, 0.4))" />
+
+  <!-- Shield Shape Path in the center -->
+  <path d="M 64,22 
+           L 96,32 
+           L 96,66 
+           C 96,90 64,106 64,106 
+           C 64,106 32,90 32,66 
+           L 32,32 Z" 
+        fill="none" 
+        stroke="url(#borderGrad)" 
+        stroke-width="3" 
+        stroke-linejoin="round" />
+
+  <!-- Building/House Silhouette -->
+  <path d="M 64,38 
+           L 84,54 
+           L 76,54 
+           L 76,82 
+           L 52,82 
+           L 52,54 
+           L 44,54 Z" 
+        fill="url(#accentGrad)" 
+        opacity="0.8" />
+
+  <!-- Gear / Maintenance Wrench Icon centered inside the House -->
+  <g transform="translate(64, 68) scale(0.9)">
+    <!-- Wrench Head -->
+    <path d="M -12,-12 
+             C -16,-8 -16,0 -12,4 
+             L -6,0 
+             C -7,-2 -7,-6 -5,-8 Z" 
+          fill="#f8fafc" />
+    <!-- Diagonal Wrench Shaft -->
+    <rect x="-8" y="-4" width="22" height="6" rx="1.5" transform="rotate(45)" fill="#f8fafc" />
+    <!-- Wrench Ring -->
+    <circle cx="10" cy="10" r="5" fill="#f8fafc" />
+    <circle cx="10" cy="10" r="2.5" fill="#0f172a" />
+  </g>
+  
+  <!-- Little Checkmark Badge on top-right -->
+  <circle cx="92" cy="36" r="12" fill="#10b981" stroke="#0a0c16" stroke-width="2" />
+  <path d="M 87,36 L 90,39 L 97,32" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
