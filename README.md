@@ -1,4 +1,10 @@
 # Society Maintenance Tracker
+# Admin login
+mail : saicharanb3h@gmail.com
+pwd : password123
+# Resident login
+mail : gudikandula.sai2023@vitstudent.ac.in
+pwd : qwertyuiop123
 
 A production-ready full-stack web application designed for apartment societies. Residents can raise maintenance complaints and track their progress, while administrators can manage complaints, priorities, overdue issues, notices, and view dashboard analytics.
 
