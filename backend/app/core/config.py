@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = ""
     
+    # Gmail API configurations
+    GMAIL_CLIENT_ID: str = ""
+    GMAIL_CLIENT_SECRET: str = ""
+    GMAIL_REFRESH_TOKEN: str = ""
+    
     # Other configs
     FRONTEND_URL: str = "http://localhost:5173"
     OVERDUE_THRESHOLD_DAYS: int = 7

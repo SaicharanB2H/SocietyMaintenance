@@ -1,5 +1,7 @@
 import smtplib
 import logging
+import base64
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
@@ -10,37 +12,94 @@ logger = logging.getLogger("email_service")
 
 class EmailService:
     @staticmethod
+    def _get_gmail_access_token() -> str:
+        """
+        Gets a fresh access token from Google OAuth endpoint using the refresh token.
+        """
+        token_url = "https://oauth2.googleapis.com/token"
+        payload = {
+            "client_id": settings.GMAIL_CLIENT_ID,
+            "client_secret": settings.GMAIL_CLIENT_SECRET,
+            "refresh_token": settings.GMAIL_REFRESH_TOKEN,
+            "grant_type": "refresh_token"
+        }
+        try:
+            response = requests.post(token_url, json=payload, timeout=10)
+            if response.status_code == 200:
+                return response.json().get("access_token")
+            else:
+                logger.error(f"Failed to refresh Google OAuth token. Status: {response.status_code}, Body: {response.text}")
+                return None
+        except Exception as e:
+            logger.error(f"Exception while refreshing Google OAuth token: {str(e)}")
+            return None
+
+    @staticmethod
     def send_email(to_email: str, subject: str, html_content: str) -> bool:
         """
-        Sends an HTML email to a user via Google SMTP.
-        Falls back to local console logging if SMTP settings are not configured.
+        Sends an HTML email.
+        Uses Gmail HTTP API if Gmail credentials are provided (bypasses Render SMTP restrictions).
+        Falls back to standard SMTP if SMTP user/password is configured.
+        Otherwise logs email content to console (Mock mode).
         """
-        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-            logger.info("=== [MOCK EMAIL SENT] ===")
-            logger.info(f"To: {to_email}")
-            logger.info(f"Subject: {subject}")
-            logger.info(f"Body: {html_content}")
-            logger.info("=========================")
-            return True
+        # 1. Try Gmail API (HTTP port 443)
+        if settings.GMAIL_CLIENT_ID and settings.GMAIL_CLIENT_SECRET and settings.GMAIL_REFRESH_TOKEN:
+            access_token = EmailService._get_gmail_access_token()
+            if access_token:
+                # Construct MIME message
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = settings.EMAIL_FROM or "me"
+                msg["To"] = to_email
+                msg.attach(MIMEText(html_content, "html"))
+                
+                # Base64url encode the message raw bytes
+                raw_message = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+                
+                # Gmail API Send endpoint
+                send_url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+                
+                try:
+                    response = requests.post(send_url, headers=headers, json={"raw": raw_message}, timeout=10)
+                    if response.status_code in (200, 201):
+                        logger.info(f"Successfully sent email to {to_email} via Gmail API")
+                        return True
+                    else:
+                        logger.error(f"Failed to send email via Gmail API: {response.text}")
+                except Exception as e:
+                    logger.error(f"Exception while sending via Gmail API: {str(e)}")
 
-        # Construct email message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = settings.EMAIL_FROM or settings.SMTP_USER
-        msg["To"] = to_email
+        # 2. Try SMTP fallback
+        if settings.SMTP_USER and settings.SMTP_PASSWORD:
+            # Construct email message
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = settings.EMAIL_FROM or settings.SMTP_USER
+            msg["To"] = to_email
+            msg.attach(MIMEText(html_content, "html"))
 
-        msg.attach(MIMEText(html_content, "html"))
+            try:
+                with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                    server.starttls()  # Upgrade connection to secure TLS
+                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                    server.sendmail(msg["From"], to_email, msg.as_string())
+                logger.info(f"Successfully sent email to {to_email} via SMTP")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to send email to {to_email} via SMTP: {str(e)}")
+                return False
 
-        try:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-                server.starttls()  # Upgrade connection to secure TLS
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(msg["From"], to_email, msg.as_string())
-            logger.info(f"Successfully sent email to {to_email}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email to {to_email} via SMTP: {str(e)}")
-            return False
+        # 3. Mock Console Logging fallback
+        logger.info("=== [MOCK EMAIL SENT] ===")
+        logger.info(f"To: {to_email}")
+        logger.info(f"Subject: {subject}")
+        logger.info(f"Body: {html_content}")
+        logger.info("=========================")
+        return True
 
     @staticmethod
     def send_status_update_email(
